@@ -16,6 +16,10 @@
  * =====================================================================================
  */
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <termios.h>
 #define PAGELEN 24
 #define LINELEN 512
 
@@ -49,19 +53,31 @@ void do_more(FILE * fp)
 	FILE * fp_tty ;
 	if((fp_tty = fopen("/dev/tty","r")) == NULL)
 		exit(1);
+	/* 改变终端的属性为无回显按下q 或 ' ' 无需再按Enter即可执行*/
+	struct termios term,save_term;   
+	if(tcgetattr(fileno(fp_tty),&term) < 0)
+		printf("tcgetattr failed\n");
+	save_term = term;
+	term.c_lflag &= ~( ECHO | ICANON); 
+	if(tcsetattr(fileno(fp_tty),TCSANOW,&term) < 0)
+		printf("tcsetattr failed\n");
 	while(fgets(line,LINELEN,fp))
 	{
 		if(num_of_lines == PAGELEN)
 		{
 			reply = see_more(fp_tty);
 			if(reply == 0)
+			{
 				break;
+			}
 			num_of_lines -= reply;
 		}
 		if(fputs(line,stdout) == EOF)
 			exit(1);
 		num_of_lines++;
 	}
+	if(tcsetattr(fileno(fp_tty),TCSANOW,&save_term) < 0)
+		printf("restore from save_term failed \n");
 }
 
 int see_more(FILE * cmd)
