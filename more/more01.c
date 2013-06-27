@@ -20,9 +20,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
-#define PAGELEN 24
-#define LINELEN 512
+#include <sys/ioctl.h>
 
+#define LINELEN 512
+int PAGELEN;
 void do_more(FILE *);
 int see_more(FILE *);
 
@@ -48,19 +49,23 @@ int main(int argc,char **argv)
 void do_more(FILE * fp)
 {
 	char line[LINELEN];
-	int num_of_lines = 0;
 	int reply;
+	int num_of_lines = 0;
 	FILE * fp_tty ;
+	struct winsize size;
 	if((fp_tty = fopen("/dev/tty","r")) == NULL)
 		exit(1);
+	if(ioctl(fileno(fp_tty),TIOCGWINSZ,&size) == -1)
+		perror("get term size failed \n");
+	PAGELEN = size.ws_row;
 	/* 改变终端的属性为无回显按下q 或 ' ' 无需再按Enter即可执行*/
 	struct termios term,save_term;   
 	if(tcgetattr(fileno(fp_tty),&term) < 0)
-		printf("tcgetattr failed\n");
+		perror("tcgetattr failed\n");
 	save_term = term;
 	term.c_lflag &= ~( ECHO | ICANON); 
 	if(tcsetattr(fileno(fp_tty),TCSANOW,&term) < 0)
-		printf("tcsetattr failed\n");
+		perror("tcsetattr failed\n");
 	while(fgets(line,LINELEN,fp))
 	{
 		if(num_of_lines == PAGELEN)
@@ -77,22 +82,30 @@ void do_more(FILE * fp)
 		num_of_lines++;
 	}
 	if(tcsetattr(fileno(fp_tty),TCSANOW,&save_term) < 0)
-		printf("restore from save_term failed \n");
+		perror("restore from save_term failed \n");
 }
 
 int see_more(FILE * cmd)
 {
 	int c;
-	printf("\033[7m more? \033[m");
+	printf("\033[7m more  ? \033[m");
 	while((c=getc(cmd)) != EOF)
 	{
 		if(c == 'q')
 			return 0;
 		if(c == ' ')
+		{
+			printf("\033[J"); //清屏  VT100控制码
+			printf("\033[B\033[2K"); //光标下移一行并删除该行
 			return PAGELEN;
+		}
 		if(c == '\n')
+		{
+			printf("\033[B\033[2K"); //光标下移一行并删除该行
 			return 1;
+		}
 	}
 
 	return 0;
 }
+
