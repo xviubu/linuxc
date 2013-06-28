@@ -24,6 +24,8 @@
 
 #define LINELEN 512
 int PAGELEN;
+off_t file_size;
+off_t file_pos;
 void do_more(FILE *);
 int see_more(FILE *);
 
@@ -53,13 +55,19 @@ void do_more(FILE * fp)
 	int num_of_lines = 0;
 	FILE * fp_tty ;
 	struct winsize size;
+	struct termios term,save_term;   
+	struct stat buf;
 	if((fp_tty = fopen("/dev/tty","r")) == NULL)
 		exit(1);
+	/*获取终端屏幕大小*/
 	if(ioctl(fileno(fp_tty),TIOCGWINSZ,&size) == -1)
 		perror("get term size failed \n");
 	PAGELEN = size.ws_row;
+	/*获取文件大小*/
+	if(fstat(fileno(fp),&buf) < 0)
+		perror("get file stat failed\n");
+	file_size = buf.st_size;
 	/* 改变终端的属性为无回显按下q 或 ' ' 无需再按Enter即可执行*/
-	struct termios term,save_term;   
 	if(tcgetattr(fileno(fp_tty),&term) < 0)
 		perror("tcgetattr failed\n");
 	save_term = term;
@@ -68,6 +76,7 @@ void do_more(FILE * fp)
 		perror("tcsetattr failed\n");
 	while(fgets(line,LINELEN,fp))
 	{
+		file_pos = ftello(fp);
 		if(num_of_lines == PAGELEN)
 		{
 			reply = see_more(fp_tty);
@@ -88,7 +97,7 @@ void do_more(FILE * fp)
 int see_more(FILE * cmd)
 {
 	int c;
-	printf("\033[7m more  ? \033[m");
+	printf("\033[7m ---more--- %2.2f%%  \033[m",file_pos*100.0/file_size);
 	while((c=getc(cmd)) != EOF)
 	{
 		if(c == 'q')
