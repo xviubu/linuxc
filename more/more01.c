@@ -24,6 +24,8 @@
 
 #define LINELEN 512
 int PAGELEN;
+int PAGECOUNT = 1;
+int LINECOUNT;
 off_t file_size;
 off_t file_pos;
 void do_more(FILE *);
@@ -97,7 +99,7 @@ void do_more(FILE * fp)
 int see_more(FILE * cmd)
 {
 	int c;
-	printf("\033[7m ---more--- %2.2f%%  \033[m",file_pos*100.0/file_size);
+	printf("\033[7m %d---more--- %2.2f%%  \033[m",PAGECOUNT,file_pos*100.0/file_size);
 	while((c=getc(cmd)) != EOF)
 	{
 		if(c == 'q')
@@ -105,12 +107,19 @@ int see_more(FILE * cmd)
 		if(c == ' ')
 		{
 			printf("\033[J"); //清屏  VT100控制码
+			PAGECOUNT ++;
 			printf("\033[B\033[2K"); //光标下移一行并删除该行
 			return PAGELEN;
 		}
 		if(c == '\n')
 		{
 			printf("\033[B\033[2K"); //光标下移一行并删除该行
+			LINECOUNT++;
+			if(LINECOUNT == PAGELEN)
+			{
+				PAGECOUNT++;
+				LINECOUNT = 0;
+			}
 			return 1;
 		}
 	}
