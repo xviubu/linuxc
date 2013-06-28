@@ -99,7 +99,7 @@ void do_more(FILE * fp)
 int see_more(FILE * cmd)
 {
 	int c;
-	printf("\033[7m %d---more--- %2.2f%%  \033[m",PAGECOUNT,file_pos*100.0/file_size);
+	int more_size = printf("\033[7m %d---more--- %2.2f%%  \033[m",PAGECOUNT,file_pos*100.0/file_size);
 	while((c=getc(cmd)) != EOF)
 	{
 		if(c == 'q')
@@ -114,6 +114,7 @@ int see_more(FILE * cmd)
 		if(c == '\n')
 		{
 			printf("\033[B\033[2K"); //光标下移一行并删除该行
+			printf("\033[%dD",more_size); //将光标向后移动more_size
 			LINECOUNT++;
 			if(LINECOUNT == PAGELEN)
 			{
