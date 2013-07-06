@@ -78,7 +78,7 @@ void do_more(FILE * fp)
 		perror("tcsetattr failed\n");
 	while(fgets(line,LINELEN,fp))
 	{
-		file_pos = ftello(fp);
+		file_pos = ftello(fp);  //得到当前位置
 		if(num_of_lines == PAGELEN)
 		{
 			reply = see_more(fp_tty);
@@ -92,14 +92,14 @@ void do_more(FILE * fp)
 			exit(1);
 		num_of_lines++;
 	}
-	if(tcsetattr(fileno(fp_tty),TCSANOW,&save_term) < 0)
+	if(tcsetattr(fileno(fp_tty),TCSANOW,&save_term) < 0) //设置终端属性
 		perror("restore from save_term failed \n");
 }
 
 int see_more(FILE * cmd)
 {
 	int c;
-	int more_size = printf("\033[7m %d---more--- %2.2f%%  \033[m",PAGECOUNT,file_pos*100.0/file_size);
+	int more_size = printf("\033[7m P%d---more--- %2.2f%%  \033[m",PAGECOUNT,file_pos*100.0/file_size);
 	while((c=getc(cmd)) != EOF)
 	{
 		if(c == 'q')

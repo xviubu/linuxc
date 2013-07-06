@@ -1,0 +1,13 @@
+ 1 . mkdir hello ; cd hello
+ 2 . vim hello.c
+ 3 . autoscan -> configure.scan
+ 4 . mv configure.scan configure.in and 修改
+ 5 . aclocal ; autoconf
+ 6 . create Makefile.am ; vim 
+ 7 . automake --add-missing
+ 8 . ./configure --> makefile 
+ 9 . make 
+ 
+
+
+
