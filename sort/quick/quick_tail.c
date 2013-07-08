@@ -4,6 +4,9 @@
  *       Filename:  quick.c
  *
  *    Description:  quick sort  以最后一个元素作为比较对象
+ *    				N.Lomto Partition
+ *    				i j 同向j 扫描整个列表一遍，当遇到比x小的数i++ 交换A[i] 与 A[j]
+ *    				i 只会出现在比x小的数
  *
  *        Version:  1.0
  *        Created:  2013年07月02日 12时15分56秒 CST
@@ -38,7 +41,7 @@ int partition(int A[],int p ,int r)
 		}
 	}
 	swap(&A[i+1],&A[r]);
-	return i+1;
+	return i;
 }
 void quick_sort(int A[],int p ,int r)
 {
